@@ -1,0 +1,162 @@
+# Personal preferences for the Sport Planner.
+# Coordinates below are public beach / trailhead locations, NOT your home (that lives in .env).
+# Spot windows are starting values for the Conil area — refine them as you learn what works for you.
+
+rider:
+  level: advanced_beginner
+  kite_sizes_m: [9, 12]
+  # Wind bands per kite (knots). Overlap is intentional.
+  kite_wind_bands_kn:
+    12: { min: 14, ideal_min: 16, ideal_max: 22, max: 25 }
+    9:  { min: 19, ideal_min: 21, ideal_max: 30, max: 35 }
+  max_gust_factor: 1.6          # gust / average above this = flagged very gusty (warning, not a veto)
+  gust_weight: 0.6              # kite sizing: 0 = size for the average, 1 = size for the gusts
+  surf_wave_min_m: 0.6
+  surf_wave_max_m: 1.6
+  mtb_speed_kmh: 13             # realistic off-road average
+  mtb_climb_min_per_100m: 2.5   # extra minutes per 100 m of elevation gain
+  mtb_max_distance_km: 40
+
+constraints:
+  max_drive_min: 90
+  min_session_min: 75
+  max_session_min: 90           # weekday cap; the planner takes the best part of a longer window
+  max_session_min_weekend: 90   # raise this if you want longer weekend sessions
+  weekday_lunch: "14:30"
+  weekday_work_start: "15:00"
+  earliest_departure: "08:00"   # never plan leaving home before this
+  lunch_duration_min: 30
+  work_from_home_default: true
+  arrive_home_before_lunch_min: 20   # shower / change at home before lunch
+  buffers_min:
+    gear_setup: 20
+    pack_down: 20
+    change_shower: 15
+    traffic_safety: 15
+  campervan:
+    available: true
+    work_setup_min: 20
+    connectivity_note: "4G hotspot; verify coverage at the spot before relying on it"
+  flex:                          # "stay longer when it's really good" — always a proposal, never automatic
+    enabled: true
+    min_score: 85                # day's best surf/kite score needed
+    latest_work_start: "16:00"   # never propose starting work later than this (or than your first meeting)
+    max_session_min: 150         # session cap on such days (normal weekday cap is 90)
+
+surf_spots:
+  - id: el_palmar
+    name: El Palmar (Vejer)
+    location: { lat: 36.2341, lon: -6.0657 }
+    faces_deg: 290
+    swell_dirs_deg: [[240, 330]]
+    offshore_dirs_deg: [[60, 140]]
+    wave_min_m: 0.6
+    wave_max_m: 1.6
+    min_period_s: 7
+    parking_walk_min: 5
+    campervan_ok: true
+    campervan_connectivity_note: "Good 4G along the paseo"
+  - id: conil_fontanilla
+    name: Conil – La Fontanilla
+    location: { lat: 36.2895, lon: -6.0993 }
+    faces_deg: 275
+    swell_dirs_deg: [[230, 320]]
+    offshore_dirs_deg: [[50, 130]]
+    wave_min_m: 0.5
+    wave_max_m: 1.4
+    min_period_s: 7
+    parking_walk_min: 8
+    campervan_ok: false
+  - id: zahora
+    name: Zahora
+    location: { lat: 36.2055, lon: -6.0450 }
+    faces_deg: 285
+    swell_dirs_deg: [[235, 325]]
+    offshore_dirs_deg: [[55, 135]]
+    wave_min_m: 0.6
+    wave_max_m: 1.5
+    min_period_s: 7
+    parking_walk_min: 5
+    campervan_ok: true
+  - id: canos_de_meca
+    name: Los Caños de Meca
+    location: { lat: 36.1853, lon: -6.0105 }
+    faces_deg: 235
+    swell_dirs_deg: [[200, 290]]
+    offshore_dirs_deg: [[20, 100]]
+    wave_min_m: 0.6
+    wave_max_m: 1.5
+    min_period_s: 8
+    parking_walk_min: 6
+    campervan_ok: false
+    notes: "Rocky in places; sheltered from Levante"
+
+kite_spots:
+  - id: valdevaqueros
+    name: Valdevaqueros (Tarifa)
+    location: { lat: 36.0650, lon: -5.6850 }
+    safe_wind_dirs_deg: [[200, 300], [60, 120]]   # Poniente side-on; Levante cross-offshore (allowed, flagged gusty)
+    unsafe_wind_dirs_deg: [[300, 360], [0, 40]]   # northerlies are straight offshore
+    gust_adjust:                                  # Levante accelerates off the hills; models under-read the gusts
+      - { dirs_deg: [[50, 130]], factor: 1.2 }
+    parking_walk_min: 6
+    campervan_ok: true
+    campervan_connectivity_note: "4G usually fine near the car park"
+    restrictions: "Summer bathing-zone rules; check beach signage"
+  - id: los_lances
+    name: Los Lances (Tarifa)
+    location: { lat: 36.0300, lon: -5.6300 }
+    safe_wind_dirs_deg: [[60, 120], [220, 300]]   # Levante cross-shore here, Poniente side-on
+    unsafe_wind_dirs_deg: [[300, 360], [0, 40]]
+    parking_walk_min: 8
+    campervan_ok: true
+    restrictions: "Protected natural area; kiting zones change seasonally — check signage"
+  - id: palmones
+    name: Palmones (Algeciras bay)
+    location: { lat: 36.1760, lon: -5.4420 }
+    safe_wind_dirs_deg: [[60, 140]]               # Levante in the bay — VERIFY window with your experience
+    unsafe_wind_dirs_deg: [[180, 300]]            # westerlies blow out of the bay — VERIFY
+    parking_walk_min: 5
+    campervan_ok: false                           # VERIFY
+    notes: "Flatter water and steadier Levante than Tarifa (to be confirmed by you)"
+  - id: canos_kite
+    name: Los Caños de Meca (kite)
+    location: { lat: 36.1870, lon: -6.0150 }
+    safe_wind_dirs_deg: [[40, 120], [220, 290]]   # Levante side-off, Poniente onshore — VERIFY
+    unsafe_wind_dirs_deg: [[340, 360], [0, 30]]
+    parking_walk_min: 6
+    campervan_ok: false
+    notes: "Rocks near the cape; VERIFY launch area and directions"
+  - id: camposoto
+    name: Camposoto (San Fernando)
+    location: { lat: 36.4380, lon: -6.2250 }
+    safe_wind_dirs_deg: [[200, 300]]
+    unsafe_wind_dirs_deg: [[40, 120]]
+    parking_walk_min: 10
+    campervan_ok: false
+    restrictions: "Seasonal restrictions in summer; check local bylaws"
+
+# MTB routes. verified=false means "suggested, not ridden/checked by you" and the
+# report labels it that way. Flip to true once you have ridden it.
+mtb_routes:
+  - id: roche_pinar
+    name: Pinar de Roche coastal loop
+    start: { lat: 36.3045, lon: -6.1455 }
+    distance_km: 22
+    elevation_gain_m: 180
+    terrain: sandy pine tracks
+    verified: false
+  - id: vejer_muela
+    name: Vejer – La Muela ridge
+    start: { lat: 36.2520, lon: -5.9680 }
+    distance_km: 28
+    elevation_gain_m: 520
+    terrain: gravel and singletrack
+    verified: false
+  - id: brena_barbate
+    name: La Breña pinewood (Barbate)
+    start: { lat: 36.1960, lon: -5.9500 }
+    distance_km: 24
+    elevation_gain_m: 300
+    terrain: forest tracks
+    verified: false

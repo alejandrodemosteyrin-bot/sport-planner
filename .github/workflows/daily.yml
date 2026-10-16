@@ -1,0 +1,87 @@
+name: Daily sport report
+
+# GitHub cron is UTC-only. 09:00 Europe/Madrid is 07:00 UTC in summer (CEST)
+# and 08:00 UTC in winter (CET). Both slots are scheduled; the first step
+# skips the slot that doesn't match today's offset, so exactly one runs.
+on:
+  schedule:
+    - cron: "0 7 * * *"   # 09:00 CEST
+    - cron: "0 8 * * *"   # 09:00 CET
+  workflow_dispatch: {}   # "Run workflow" button for manual runs
+
+concurrency:
+  group: daily-report
+  cancel-in-progress: false
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Pick the DST-correct slot
+        id: gate
+        run: |
+          offset=$(TZ=Europe/Madrid date +%z)
+          slot="${{ github.event.schedule }}"
+          run=yes
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            if [ "$slot" = "0 7 * * *" ] && [ "$offset" != "+0200" ]; then run=no; fi
+            if [ "$slot" = "0 8 * * *" ] && [ "$offset" != "+0100" ]; then run=no; fi
+          fi
+          echo "Madrid offset $offset, slot '$slot' -> run=$run"
+          echo "run=$run" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v4
+        if: steps.gate.outputs.run == 'yes'
+
+      - uses: actions/setup-python@v5
+        if: steps.gate.outputs.run == 'yes'
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install
+        if: steps.gate.outputs.run == 'yes'
+        run: pip install .
+
+      # Yesterday's report, for "Changes since yesterday"
+      - name: Restore previous report
+        if: steps.gate.outputs.run == 'yes'
+        uses: actions/cache/restore@v4
+        with:
+          path: state/latest_report.json
+          key: report-${{ github.run_id }}
+          restore-keys: report-
+
+      - name: Write calendar token
+        if: steps.gate.outputs.run == 'yes'
+        env:
+          GOOGLE_TOKEN_JSON: ${{ secrets.GOOGLE_TOKEN_JSON }}
+        run: |
+          mkdir -p state
+          if [ -n "$GOOGLE_TOKEN_JSON" ]; then printf '%s' "$GOOGLE_TOKEN_JSON" > state/google_token.json; fi
+
+      - name: Build and send report
+        if: steps.gate.outputs.run == 'yes'
+        env:
+          TZ: Europe/Madrid
+          HOME_LAT: ${{ secrets.HOME_LAT }}
+          HOME_LON: ${{ secrets.HOME_LON }}
+          DELIVERY_CHANNEL: email
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
+          AEMET_API_KEY: ${{ secrets.AEMET_API_KEY }}
+          GOOGLE_CALENDAR_IDS: ${{ secrets.GOOGLE_CALENDAR_IDS || 'primary' }}
+          ENABLE_SURF_FORECAST: "0"
+          ENABLE_WINDGURU: "0"
+          STATE_DIR: state
+        run: sport-planner run --send
+
+      - name: Save report for tomorrow
+        if: always() && steps.gate.outputs.run == 'yes' && hashFiles('state/latest_report.json') != ''
+        uses: actions/cache/save@v4
+        with:
+          path: state/latest_report.json
+          key: report-${{ github.run_id }}

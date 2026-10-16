@@ -1,0 +1,37 @@
+# Credentials and personal data — never commit
+.env
+*.env
+!.env.example
+secrets/
+state/
+credentials.json
+token.json
+client_secret*.json
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+
+# Workspace home-dir noise (this repo lives in a home directory)
+.npm/
+.npm-global/
+.config/
+.claude/
+.pki/
+.ssh/
+.cache/
+.gitconfig
+.wget-hsts
