@@ -46,11 +46,12 @@ def now_utc() -> datetime:
     return datetime.now(timezone.utc)
 
 
-def make_client(timeout_s: float = 20.0, transport: httpx.BaseTransport | None = None) -> httpx.Client:
-    """One place to build HTTP clients so tests can inject a MockTransport."""
+def make_client(timeout_s: float = 30.0, transport: httpx.BaseTransport | None = None) -> httpx.Client:
+    """One place to build HTTP clients so tests can inject a MockTransport.
+    Real clients retry failed connections (e.g. TLS handshake timeouts) 3 times."""
     return httpx.Client(
-        timeout=timeout_s,
-        transport=transport,
+        timeout=httpx.Timeout(timeout_s, connect=15.0),
+        transport=transport or httpx.HTTPTransport(retries=3),
         headers={"User-Agent": "sport-planner/0.1 (personal, non-commercial)"},
         follow_redirects=True,
     )

@@ -225,3 +225,10 @@ def test_flex_proposal_only_on_great_days_without_meetings(settings, prefs):
     r3, _ = _run(settings, prefs, sc3, start=WED)
     p3 = r3.days[0].itinerary.proposal
     assert p3 is None or p3.kind != "later_work_start" or "score" not in p3.rationale
+
+
+def test_disabled_optional_sources_not_listed(settings, prefs):
+    r, _ = _run(settings, prefs, Scenario(WED), start=WED)  # fixture has surf-forecast/windguru off
+    names = {p.name for p in r.providers}
+    assert "surf-forecast" not in names and "windguru" not in names
+    assert "aemet-alerts" in names  # a real gap stays visible until its key is set

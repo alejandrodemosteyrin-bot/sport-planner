@@ -63,6 +63,10 @@ class Bundle:
 def collect(settings: Settings, prefs: Preferences, *, now: datetime | None = None, http_client=None, calendar_service=None) -> Bundle:
     tz = settings.tz
     now = now or datetime.now(tz)
+    if http_client is None:
+        from ..providers.base import make_client
+
+        http_client = make_client(settings.http_timeout_s)  # one pooled client: fewer TLS handshakes
     b = Bundle(now=now, window_start=now.date(), home=LatLon(lat=settings.home_lat, lon=settings.home_lon) if settings.home_configured else None)
     if b.home is None:
         b.missing.append("HOME_LAT/HOME_LON not set — itineraries cannot be timed")
@@ -98,15 +102,17 @@ def collect(settings: Settings, prefs: Preferences, *, now: datetime | None = No
             seen_status.add("wind")
         b.by_spot[sid] = ld
 
-    # --- optional cross-checks
-    for s in prefs.surf_spots:
-        sf = surf_forecast.fetch_break_summary(s.id, tz, enabled=settings.enable_surf_forecast, client=http_client)
-        if sf.ok:
-            b.surf_forecast_xcheck[s.id] = sf.data
-        if "sf" not in seen_status:
-            b.statuses.append(sf.status())
-            seen_status.add("sf")
-    b.statuses.append(windguru.fetch("valdevaqueros", enabled=settings.enable_windguru).status())
+    # --- optional cross-checks (left out of the report entirely when switched off on purpose)
+    if settings.enable_surf_forecast:
+        for s in prefs.surf_spots:
+            sf = surf_forecast.fetch_break_summary(s.id, tz, enabled=True, client=http_client)
+            if sf.ok:
+                b.surf_forecast_xcheck[s.id] = sf.data
+            if "sf" not in seen_status:
+                b.statuses.append(sf.status())
+                seen_status.add("sf")
+    if settings.enable_windguru:
+        b.statuses.append(windguru.fetch("valdevaqueros", enabled=True).status())
 
     # --- alerts
     al = aemet.fetch_alerts(settings.aemet_api_key, client=http_client)

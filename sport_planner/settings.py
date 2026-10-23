@@ -48,7 +48,7 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
 
     # Network
-    http_timeout_s: float = Field(default=20.0, gt=0)
+    http_timeout_s: float = Field(default=30.0, gt=0)
 
     @field_validator("timezone")
     @classmethod
