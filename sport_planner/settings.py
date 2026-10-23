@@ -36,6 +36,7 @@ class Settings(BaseSettings):
     google_maps_api_key: str | None = None
     google_oauth_client_file: Path = Path("secrets/client_secret.json")
     google_calendar_ids: str = "primary"
+    calendar_ics_urls: str | None = None  # secret iCal links; when set, used instead of Google OAuth
 
     aemet_api_key: str | None = None
 

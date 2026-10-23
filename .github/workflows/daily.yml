@@ -74,6 +74,7 @@ jobs:
           GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
           AEMET_API_KEY: ${{ secrets.AEMET_API_KEY }}
           GOOGLE_CALENDAR_IDS: ${{ secrets.GOOGLE_CALENDAR_IDS || 'primary' }}
+          CALENDAR_ICS_URLS: ${{ secrets.CALENDAR_ICS_URLS }}
           ENABLE_SURF_FORECAST: "0"
           ENABLE_WINDGURU: "0"
           STATE_DIR: state

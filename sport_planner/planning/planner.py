@@ -26,7 +26,7 @@ from ..models import (
     WindPoint,
 )
 from ..preferences import Preferences
-from ..providers import aemet, google_calendar, google_maps, open_meteo, surf_forecast, windguru
+from ..providers import aemet, google_calendar, google_maps, ical, open_meteo, surf_forecast, windguru
 from ..scoring import kite as kite_scoring
 from ..scoring import mtb as mtb_scoring
 from ..scoring import surf as surf_scoring
@@ -116,19 +116,25 @@ def collect(settings: Settings, prefs: Preferences, *, now: datetime | None = No
     else:
         b.missing.append(f"official warnings not checked: {al.detail}")
 
-    # --- calendar
-    cal = google_calendar.fetch_events(
-        settings.google_oauth_client_file,
-        settings.state_dir / "google_token.json",
-        settings.calendar_ids,
-        b.window_start,
-        DAYS,
-        tz,
-        service=calendar_service,
-    )
+    # --- calendar: secret iCal links if configured, otherwise Google OAuth
+    ics_urls = ical.split_urls(settings.calendar_ics_urls)
+    if ics_urls and calendar_service is None:
+        cal = ical.fetch_events(ics_urls, b.window_start, DAYS, tz, client=http_client)
+    else:
+        cal = google_calendar.fetch_events(
+            settings.google_oauth_client_file,
+            settings.state_dir / "google_token.json",
+            settings.calendar_ids,
+            b.window_start,
+            DAYS,
+            tz,
+            service=calendar_service,
+        )
     b.statuses.append(cal.status())
     if cal.ok:
         b.events = cal.data
+        for w in cal.warnings:
+            b.missing.append(f"calendar partly checked — {w}")
     else:
         b.missing.append(f"calendar unavailable — commitments NOT checked: {cal.detail}")
 

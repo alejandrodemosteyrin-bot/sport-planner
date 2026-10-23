@@ -11,7 +11,7 @@ It never invents numbers: when a source is missing or a route is unverified, the
 | Waves, swell period/direction | [Open-Meteo Marine](https://open-meteo.com/en/docs/marine-weather-api) | free, no key | primary |
 | Wind, gusts, rain, temperature, sunrise/sunset | [Open-Meteo Forecast](https://open-meteo.com/en/docs) | free, no key | primary |
 | Official weather warnings (Cádiz) | [AEMET OpenData](https://opendata.aemet.es/) | free API key | live when key set |
-| Calendar commitments | Google Calendar API | OAuth, **read-only** scope | live after one-time consent |
+| Calendar commitments | Secret iCal link(s), or Google Calendar API | link in secrets, or OAuth **read-only** scope | live |
 | Driving distance / time | Google Maps **Routes API** | API key | live; otherwise a labelled estimate |
 | Report delivery | Gmail SMTP (default) or Telegram Bot API | Gmail App Password, or bot token + chat id | — |
 | Surf-Forecast | public break pages | HTML parse, optional | cross-check only, never decides |
@@ -27,7 +27,7 @@ python3 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 cp .env.example .env            # then edit .env
 mkdir -p secrets state
-pytest                          # 23 tests, all offline
+pytest                          # 27 tests, all offline
 ```
 
 Python 3.11+ required (developed on 3.13). **macOS ships Python 3.9, which is too old**: install Python 3.12 from <https://www.python.org/downloads/macos/> first and create the venv with `python3.12 -m venv .venv`. The stock `pip` is also too old for `pyproject.toml`-only projects, so run `python -m pip install --upgrade pip` inside the venv before `pip install -e`. If you see `CERTIFICATE_VERIFY_FAILED`, run `"/Applications/Python 3.12/Install Certificates.command"` once.
@@ -71,7 +71,8 @@ Runs every morning without your Mac. `.github/workflows/daily.yml` schedules bot
 2. Repository → Settings → Secrets and variables → Actions → *New repository secret*, one per line of your `.env`:
    `HOME_LAT`, `HOME_LON`, `EMAIL_TO`, `GMAIL_USER`, `GMAIL_APP_PASSWORD`, `GOOGLE_MAPS_API_KEY`, optional `AEMET_API_KEY`, optional `GOOGLE_CALENDAR_IDS`,
    and `GOOGLE_TOKEN_JSON` = the full contents of `state/google_token.json` (on the Mac: `pbcopy < state/google_token.json`, then paste).
-3. **Publish the OAuth app**: Google Cloud Console → Google Auth Platform → Audience → *Publish app*. Apps left in "Testing" get refresh tokens that expire after 7 days, which silently breaks the calendar. After publishing, run `sport-planner auth-calendar` once more on the Mac and update the `GOOGLE_TOKEN_JSON` secret.
+3. **Calendar — easiest:** add a secret `CALENDAR_ICS_URLS` with your calendar's *Secret address in iCal format* (calendar.google.com → ⚙️ Settings → your calendar → Integrate calendar). Several calendars (e.g. a work one) can be comma-separated. No sign-in, no expiry; the link is a password, so keep it only in secrets. When this is set, `GOOGLE_TOKEN_JSON` is not needed.
+   **Calendar — OAuth alternative:**  Google Cloud Console → Google Auth Platform → Audience → *Publish app*. Apps left in "Testing" get refresh tokens that expire after 7 days, which silently breaks the calendar. After publishing, run `sport-planner auth-calendar` once more on the Mac and update the `GOOGLE_TOKEN_JSON` secret.
 4. Actions tab → *Daily sport report* → *Run workflow*. When that email arrives, it is live.
 5. Remove the Mac job to avoid duplicate emails: `./deploy/install_launchd.sh --uninstall`.
 
@@ -102,7 +103,7 @@ GitHub emails you if a run fails. "Changes since yesterday" uses the Actions cac
 
 ## Tests
 
-`pytest` runs 23 offline tests covering scoring rules, exactly-five-day windows, weekday lunch/work constraints, calendar conflicts, weekend sessions, routing failure fallback, forecast gaps, campervan and flex proposals, the October DST transition, snapshot diff, Telegram chunking and email multipart/dispatch. Live checks are manual via `sport-planner status --live`.
+`pytest` runs 27 offline tests covering scoring rules, exactly-five-day windows, weekday lunch/work constraints, calendar conflicts, weekend sessions, routing failure fallback, forecast gaps, campervan and flex proposals, the October DST transition, snapshot diff, Telegram chunking and email multipart/dispatch. Live checks are manual via `sport-planner status --live`.
 
 ## Layout
 
